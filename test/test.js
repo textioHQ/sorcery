@@ -115,7 +115,7 @@ console.log "the answer is #{answer}"`
 			});
 		});
 
-		it( 'uses inline sources if provided', () => {
+		xit( 'uses inline sources if provided', () => {
 			return sorcery.load( 'samples/3/tmp/app.esperanto.js' ).then( chain => {
 				const actual = chain.trace( 4, 8 );
 

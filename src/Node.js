@@ -1,5 +1,5 @@
-import { dirname, resolve } from 'path';
-import { readFile, readFileSync, Promise } from 'sander';
+import { dirname, resolve, sep } from 'path';
+import { readFile, readFileSync, Promise, lstatSync } from 'sander';
 import { decode } from 'sourcemap-codec';
 import getMap from './utils/getMap.js';
 
@@ -81,8 +81,19 @@ Node.prototype = {
 			const sourceRoot = resolve( dirname( this.file ), map.sourceRoot || '' );
 
 			this.sources = map.sources.map( ( source, i ) => {
+				let childFile = resolve( sourceRoot, source );
+				if (!doesFileExist(childFile)) {
+					if (sourceRoot[0] === sep) {
+						const directories = dirname(this.file).split(sep);
+						const index = directories.lastIndexOf('node_modules');
+						if (index !== -1 && index + 1 < directories.length) {
+							const newBase = directories.slice(0, index + 2).join(sep);
+							childFile = resolve(newBase, sourceRoot.slice(1), source);
+						}
+					}
+				}
 				const node = new Node({
-					file: resolve( sourceRoot, source ),
+					file: childFile,
 					content: sourcesContent[i]
 				});
 
@@ -172,4 +183,15 @@ function getContent ( node, sourcesContentByPath ) {
 	}
 
 	return Promise.resolve( node.content );
+}
+
+function doesFileExist (file) {
+	let fileExists = true;
+	try {
+		lstatSync(file);
+	}
+	catch (e) {
+		fileExists = false;
+	}
+	return fileExists;
 }
